@@ -17,13 +17,38 @@ public class TestDiffEvo {
     int populationSize = 10;
     int maxIterations = 100;
     double f = 0.8;
+    double cr = 0.5;
     DifferentialEvolutionFunction e = new DETestF();
     
-    List<double[]> list = DifferentialEvolution.minimize(parameterCount, min, max, populationSize, maxIterations, f, e);
+    List<double[]> list = DifferentialEvolution.minimize(
+        parameterCount, min, max, populationSize, maxIterations, f, cr, e);
     
     for (double[] x : list)
+      // Convex functions should converge pretty close to zero
       assertEquals(0, x[0], 0.00001);
 //      System.out.println(Arrays.toString(x));
+  }
+
+  @Test
+  public void testp2() {
+    int parameterCount = 2;
+    double[] min = { -1, -1 };
+    double[] max = { 1, 1 };
+    int populationSize = 10;
+    int maxIterations = 100;
+    double f = 0.8;
+    double cr = 0.5;
+    DifferentialEvolutionFunction e = new DETestF();
+    
+    List<double[]> list = DifferentialEvolution.minimize(
+        parameterCount, min, max, populationSize, maxIterations, f, cr, e);
+    
+    for (double[] x : list) {
+      // Convex functions should converge pretty close to zero
+      for (double d : x)
+        assertEquals(0, d, 0.00001);
+//    System.out.println(Arrays.toString(x));
+    }
   }
 
   class DETestF implements DifferentialEvolutionFunction {

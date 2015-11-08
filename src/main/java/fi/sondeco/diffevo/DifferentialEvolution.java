@@ -14,11 +14,13 @@ public class DifferentialEvolution {
    * @param parameterCount amount of parameters in parameter vector(s)
    * @param populationSize population size. Absolute minimum is 4, but for better convergence 10 is recommended minimum
    * @param maxIterations maximum amount of iterations to do
-   * @param f mutation factor f = [0 2], generally 0.8 works ok 
+   * @param f mutation factor f = [0 2], generally 0.8 works ok
+   * @param cr crossover constant = [0 1] 
    * @param e cost/energy function to minimize
    * @return population after maxIterations
    */
-  public static List<double[]> minimize(int parameterCount, double[] min, double[] max, int populationSize, int maxIterations, double f, DifferentialEvolutionFunction e) {
+  public static List<double[]> minimize(int parameterCount, double[] min, double[] max, int populationSize, 
+      int maxIterations, double f, double cr, DifferentialEvolutionFunction e) {
     Random rand = new Random();
     
     List<double[]> gen = generateInitialData(populationSize, parameterCount, min, max, rand);
@@ -27,7 +29,9 @@ public class DifferentialEvolution {
       List<double[]> nextGen = new ArrayList<double[]>();
       
       for (double[] x : gen) {
-        double[] u = mutate(f, parameterCount, min, max, gen, rand);
+        double[] v = mutate(f, parameterCount, min, max, gen, rand);
+    
+        double[] u = crossover(x, v, cr, rand);
         
         double ex = e.energy(x);
         double eu = e.energy(u);
@@ -70,6 +74,22 @@ public class DifferentialEvolution {
     }
     
     return m;
+  }
+  
+  private static double[] crossover(double[] x, double[] v, double cr, Random rand) {
+    if (x.length > 1) {
+      int vkeep = rand.nextInt(x.length);
+      double[] trial = v.clone();
+      
+      for (int i = 0; i < trial.length; i++) {
+        if ((rand.nextDouble() > cr) && (i != vkeep)) {
+          trial[i] = x[i];
+        }
+      }
+      
+      return trial;
+    } else
+      return v;
   }
   
   private static double ensureInRange(double value, double min, double max) {
