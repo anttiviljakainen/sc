@@ -12,29 +12,31 @@ public class DifferentialEvolution {
    * Minimize the function e using Differential Evolution algorithm.
    * 
    * @param parameterCount amount of parameters in parameter vector(s)
+   * @param min minimum bounds for variables
+   * @param max maximum bounds for variables
    * @param populationSize population size. Absolute minimum is 4, but for better convergence 10 is recommended minimum
    * @param maxIterations maximum amount of iterations to do
    * @param f mutation factor f = [0 2], generally 0.8 works ok
    * @param cr crossover constant = [0 1] 
-   * @param e cost/energy function to minimize
+   * @param e cost function to minimize
    * @return population after maxIterations
    */
   public static List<double[]> minimize(int parameterCount, double[] min, double[] max, int populationSize, 
-      int maxIterations, double f, double cr, DifferentialEvolutionFunction e) {
+      int maxIterations, double f, double cr, DifferentialEvolutionFunction function) {
     Random rand = new Random();
     
-    List<double[]> gen = generateInitialData(populationSize, parameterCount, min, max, rand);
+    List<double[]> population = generateInitialPopulation(populationSize, parameterCount, min, max, rand);
     
     for (int i = 0; i < maxIterations ; i++) {
       List<double[]> nextGen = new ArrayList<double[]>();
       
-      for (double[] x : gen) {
-        double[] v = mutate(f, parameterCount, min, max, gen, rand);
+      for (double[] x : population) {
+        double[] v = mutate(f, parameterCount, min, max, population, rand);
     
         double[] u = crossover(x, v, cr, rand);
         
-        double ex = e.energy(x);
-        double eu = e.energy(u);
+        double ex = function.f(x);
+        double eu = function.f(u);
         
         if (ex < eu)
           nextGen.add(x);
@@ -42,10 +44,10 @@ public class DifferentialEvolution {
           nextGen.add(u);
       }
       
-      gen = nextGen;
+      population = nextGen;
     }
     
-    return gen;
+    return population;
   }
 
   /**
@@ -100,7 +102,7 @@ public class DifferentialEvolution {
     return value;
   }
   
-  private static List<double[]> generateInitialData(int populationSize, int parameterCount, double[] min, 
+  private static List<double[]> generateInitialPopulation(int populationSize, int parameterCount, double[] min, 
       double[] max, Random rand) {
     List<double[]> data = new ArrayList<double[]>();
     

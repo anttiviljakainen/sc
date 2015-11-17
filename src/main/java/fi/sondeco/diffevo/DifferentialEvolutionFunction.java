@@ -3,10 +3,10 @@ package fi.sondeco.diffevo;
 public interface DifferentialEvolutionFunction {
   
   /**
-   * Returns energy of vector x
+   * Returns cost / fitness of candidate x
    * 
    * @param x parameter vector
-   * @return energy of vector x
+   * @return cost/fitness of vector x
    */
-  double energy(double[] x);
+  double f(double[] x);
 }

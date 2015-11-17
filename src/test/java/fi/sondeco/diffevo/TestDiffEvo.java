@@ -1,8 +1,7 @@
 package fi.sondeco.diffevo;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -52,7 +51,7 @@ public class TestDiffEvo {
   }
 
   class DETestF implements DifferentialEvolutionFunction {
-    public double energy(double[] x) {
+    public double f(double[] x) {
       double s = 0;
       for (int i = 0; i < x.length; i++) {
         s += x[i] * x[i];
