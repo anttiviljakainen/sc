@@ -1,4 +1,4 @@
-package fi.sondeco.diffevo;
+package fi.sondeco.evo.de;
 
 import java.util.ArrayList;
 import java.util.List;

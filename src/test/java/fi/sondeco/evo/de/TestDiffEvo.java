@@ -1,4 +1,4 @@
-package fi.sondeco.diffevo;
+package fi.sondeco.evo.de;
 
 import static org.junit.Assert.assertEquals;
 
@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
+
+import fi.sondeco.evo.de.DifferentialEvolution;
+import fi.sondeco.evo.de.DifferentialEvolutionFunction;
 
 public class TestDiffEvo {
 

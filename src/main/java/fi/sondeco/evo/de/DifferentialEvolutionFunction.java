@@ -1,4 +1,4 @@
-package fi.sondeco.diffevo;
+package fi.sondeco.evo.de;
 
 public interface DifferentialEvolutionFunction {
   
