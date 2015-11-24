@@ -88,10 +88,10 @@ public class TestParticleSwarm {
     int dimensions = 5;
     double[] min = { -5, -5, -5, -5, -5 };
     double[] max = { 5, 5, 5, 5, 5 };
-    int population = 10;
+    int population = 50;
     double velocityModifier = 0.5d;
-    double particleBestModifier = 1.8d;
-    double globalBestModifier = 2.2d;
+    double particleBestModifier = 2d;
+    double globalBestModifier = 2d;
     int iterations = 10000;
     
     PSOFunction f = new PSOFunction() {
@@ -111,7 +111,7 @@ public class TestParticleSwarm {
     System.out.println(result);
     System.out.println(String.format("%f", f.f(result)));
 
-    assertEquals(0, f.f(result), 0.001d);
+    assertEquals(0, f.f(result), 0.01d);
     
     assertEquals(1, result.get(0, 0), 0.1d);
     assertEquals(1, result.get(0, 1), 0.1d);
