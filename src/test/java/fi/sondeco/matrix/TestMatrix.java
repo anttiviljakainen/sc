@@ -70,7 +70,7 @@ public class TestMatrix {
   
   @Test
   public void testAddRows() throws NumberFormatException, IOException, CloneNotSupportedException {
-    Matrix m = new Matrix(matrix1);
+    Matrix m = new Matrix(matrix1b);
     
     m.addRows(0, 1);
     
@@ -78,14 +78,20 @@ public class TestMatrix {
     assertEquals(0, m.get(0, 0), 0d);
     assertEquals(0, m.get(0, 1), 0d);
 
-    m = new Matrix(matrix1);
+    m = new Matrix(matrix1b);
     m.addRows(1, 1);
     
     assertEquals(4, m.getRows());
+    assertEquals(1, m.get(0, 0), 0d);
+    assertEquals(2, m.get(0, 1), 0d);
     assertEquals(0, m.get(1, 0), 0d);
     assertEquals(0, m.get(1, 1), 0d);
+    assertEquals(1, m.get(2, 0), 0d);
+    assertEquals(2, m.get(2, 1), 0d);
+    assertEquals(1, m.get(3, 0), 0d);
+    assertEquals(2, m.get(3, 1), 0d);
 
-    m = new Matrix(matrix1);
+    m = new Matrix(matrix1b);
     m.addRows(3, 1);
     
     assertEquals(4, m.getRows());
