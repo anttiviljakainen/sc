@@ -131,19 +131,19 @@ public class Matrix implements Cloneable {
     for (int i = 0; i < index; i++) {
       newData[i] = this.data[i];
     }
-    
-    for (int i = this.m - 1; i > index; i--) {
-      newData[i] = this.data[i - 1];
-    }
 
+    for (int i = index; i < this.data.length; i++) {
+      newData[i + count] = this.data[i];
+    }
+    
     this.data = newData;
   }
 
-  public Matrix appendRows(Matrix grad) {
-    if (grad.getColumns() != getColumns())
+  public Matrix appendRows(Matrix rows) {
+    if (rows.getColumns() != getColumns())
       throw new RuntimeException("Column size must match to append rows.");
     
-    this.m += grad.getRows();
+    this.m += rows.getRows();
     
     double[][] newData = new double[this.m][this.n];
     
@@ -151,8 +151,8 @@ public class Matrix implements Cloneable {
       newData[i] = this.data[i];
     }
 
-    for (int i = 0; i < grad.data.length; i++) {
-      newData[this.data.length + i] = grad.data[i];
+    for (int i = 0; i < rows.data.length; i++) {
+      newData[this.data.length + i] = rows.data[i];
     }
     
     this.data = newData;
