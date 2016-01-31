@@ -416,6 +416,36 @@ public class Matrix implements Cloneable {
     return this;
   }
 
+  /**
+   * Does dotwise max on the matrix i.e. picks the bigger one for the cell.
+   * 
+   * @param scalar
+   * @return
+   */
+  public Matrix dotmax(double scalar) {
+    for (int i = 0; i < this.m; i++) {
+      for (int j = 0; j < this.n; j++)
+        data[i][j] = Math.max(data[i][j], scalar);
+    }
+    
+    return this;
+  }
+
+  /**
+   * Does dotwise min on the matrix i.e. picks the smaller one for the cell.
+   * 
+   * @param scalar
+   * @return
+   */
+  public Matrix dotmin(double scalar) {
+    for (int i = 0; i < this.m; i++) {
+      for (int j = 0; j < this.n; j++)
+        data[i][j] = Math.min(data[i][j], scalar);
+    }
+    
+    return this;
+  }
+
   public Matrix exp() {
     for (int i = 0; i < this.m; i++) {
       for (int j = 0; j < this.n; j++)
