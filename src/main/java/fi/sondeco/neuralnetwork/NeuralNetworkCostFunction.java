@@ -29,15 +29,13 @@ public class NeuralNetworkCostFunction implements CostFunction {
       Matrix a = Matrix.split(x, i, i, 0, x.getColumns() - 1);
       a.transpose();
 
-      for (Matrix theta : thetas) {
+      for (int layer = 0; layer < neuralNetwork.getLayerCount(); layer++) {
+        Matrix theta = thetas.get(layer);
         a.addRows(0, 1);
         a.set(0, 0, 1);
 
         a = Matrix.multiply(theta, a);
-        a = neuralNetwork.getActivationFunction().activate(a);
-        
-//        a = Matrix.multiply(t, a).multiply(-1).exp().add(1);
-//        a = Matrix.s(1).dotdivide(a);
+        a = neuralNetwork.getLayer(layer).getActivationFunction().activate(a);
       }
 
       Matrix yX = new Matrix(neuralNetwork.getOutputCount(), 1);
@@ -50,7 +48,8 @@ public class NeuralNetworkCostFunction implements CostFunction {
       
       Matrix b1 = Matrix.dotmultiply(yX, Matrix.log(a));
 //      Matrix b2 = Matrix.ones(yX.getRows(), yX.getColumns()).subtract(yX).dotmultiply(Matrix.ones(a.getRows(), a.getColumns()).subtract(a).log());
-      Matrix b2 = Matrix.s(1).subtract(yX).dotmultiply(Matrix.s(1).subtract(a).log());
+      Matrix sub = Matrix.s(1).subtract(a);
+      Matrix b2 = Matrix.s(1).subtract(yX).dotmultiply(sub.log());
       
       J = J - 1d / m * b1.add(b2).sum();
     }
@@ -85,9 +84,9 @@ public class NeuralNetworkCostFunction implements CostFunction {
     
     int index = 0;
     
-    for (int i = 0; i < neuralNetwork.getNeuronCounts().length - 1; i++) {
-      int n1 = neuralNetwork.getNeuronCounts()[i] + 1;
-      int n2 = neuralNetwork.getNeuronCounts()[i + 1];
+    for (int i = 0; i < neuralNetwork.getLayerCount(); i++) {
+      int n1 = neuralNetwork.getLayer(i).getInputCount() + 1;
+      int n2 = neuralNetwork.getLayer(i).getOutputCount();
       
       Matrix vector = Matrix.split(vectorizedTheta, index, index + n2 * n1 - 1, 0, 0);
       vector.reshape(n2, n1);
@@ -132,15 +131,15 @@ public class NeuralNetworkCostFunction implements CostFunction {
       
       A.add(activation);
       
-      for (int t_i = 0; t_i < thetas.size(); t_i++) {
-        Matrix theta = thetas.get(t_i);
+      for (int layer = 0; layer < neuralNetwork.getLayerCount(); layer++) {
+        Matrix theta = thetas.get(layer);
         Matrix z;
         
         Z.add(z = Matrix.multiply(theta, activation));
         
-        activation = neuralNetwork.getActivationFunction().activate(z);
+        activation = neuralNetwork.getLayer(layer).getActivationFunction().activate(z);
         
-        if (t_i < thetas.size() - 1) {
+        if (layer < thetas.size() - 1) {
           activation.addRows(0, 1);
           activation.set(0, 0, 1);
         }
@@ -186,8 +185,7 @@ public class NeuralNetworkCostFunction implements CostFunction {
 
         Matrix z = (Matrix) Z.get(j).clone();
 
-        // Sigmoid gradient
-        z = neuralNetwork.getActivationFunction().derivate(z);
+        z = neuralNetwork.getLayer(j + 1).getActivationFunction().gradient(z);
         
         z.addRows(0, 1);
         z.set(0, 0, 1);

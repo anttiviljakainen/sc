@@ -1,6 +1,10 @@
 package fi.sondeco.machinelearning;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class ImageUtils {
 
@@ -258,7 +262,7 @@ public class ImageUtils {
       for (int y = 0; y < image.getHeight(); y++) {
         if (grayscale(image.getRGB(x, y)) == 255) {
           for (int theta = 0; theta < thetaCount; theta++) {
-            double angle = theta * degreeAccuracy;
+            double angle = Math.toRadians(theta * degreeAccuracy);
             double rho = x * Math.cos(angle) + y * Math.sin(angle);
             
             if (rho < minr)
@@ -270,7 +274,7 @@ public class ImageUtils {
             
             houghTable[roundedRho][theta]++;
             
-            System.out.println(roundedRho + " - " + rho);
+            //System.out.println(roundedRho + " - " + rho);
           }
         }
       }
@@ -284,8 +288,24 @@ public class ImageUtils {
     return houghTable;
   }
   
-  public int[][] houghTop(int[][] houghTable, int count) {
+  public static List<HoughVote> houghTop(int[][] houghTable, int count, int voteThreshold) {
+    List<HoughVote> votes = new ArrayList<HoughVote>();
+    for (int rho = 0; rho < houghTable.length; rho++) {
+      for (int angle = 0; angle < houghTable[rho].length; angle++) {
+        if (houghTable[rho][angle] > voteThreshold) {
+          // TODO: proper rho and angle?
+          votes.add(new HoughVote(rho, angle, houghTable[rho][angle]));
+        }
+      }
+    }
     
+    Collections.sort(votes, new Comparator<HoughVote>() {
+      public int compare(HoughVote arg0, HoughVote arg1) {
+        return arg1.getVotes() - arg0.getVotes();
+      }
+    });
+    
+    return votes.subList(0, count);
   }
   
 }

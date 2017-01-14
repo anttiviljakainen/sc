@@ -50,6 +50,14 @@ public class Matrix implements Cloneable {
           }
         }
       break;
+      
+      case IDENTITY:
+        if (m != n)
+          throw new RuntimeException("Cannot create identity matrix which is not square matrix.");
+        
+        for (int i = 0; i < m; i++)
+          set(i, i, 1);
+      break;
     }
   }
   
@@ -176,6 +184,10 @@ public class Matrix implements Cloneable {
     }
     
     return null;
+  }
+  
+  public static Matrix I(int dim) {
+    return new Matrix(dim, dim, MatrixInit.IDENTITY);
   }
   
   public static Matrix s(double scalar) {
@@ -431,6 +443,15 @@ public class Matrix implements Cloneable {
     return this;
   }
 
+  public Matrix each(MatrixCellOperator cellop) {
+    for (int i = 0; i < this.m; i++) {
+      for (int j = 0; j < this.n; j++)
+        data[i][j] = cellop.op(data[i][j]);
+    }
+    
+    return this;
+  }
+
   /**
    * Does dotwise min on the matrix i.e. picks the smaller one for the cell.
    * 
@@ -475,6 +496,132 @@ public class Matrix implements Cloneable {
     return d;
   }
 
+  public LUDecomposition lu() {
+    if (m != n)
+      throw new RuntimeException("LU decomposition is undefined for non-square matrices.");
+    
+    Matrix l = Matrix.I(m);//new Matrix(m, n);
+    Matrix u = new Matrix(m, n);
+    Matrix p = Matrix.I(m);
+    Matrix a = (Matrix) clone();
+    
+    for (int k = 0; k < m; k++) {
+      int a_row = k;
+      
+      double max_val = a.get(a_row, k);
+      // Find the biggest value of the column
+      for (int r = k + 1; r < m; r++) {
+        if (a.get(r, k) > max_val) {
+          a_row = r;
+          max_val = a.get(r, k);
+        }
+      }
+      
+      if (a_row != k) {
+        a.swapRows(k, a_row);
+        p.swapRows(k, a_row);
+      }
+      
+      for (int i = k + 1; i < m; i++) {
+        a.set(i, k, a.get(i, k) / a.get(k, k));
+        
+        for (int j = k + 1; j < m; j++) {
+          a.set(i, j, a.get(i, j) - a.get(i, k) * a.get(k, j));
+        }
+      }
+    }
+
+    // TODO migrate the loops
+    for (int i = 0; i < m; i++) {
+      for (int j = 0; j < m; j++) {
+        if (j < i)
+          l.set(i, j, a.get(i, j));
+        else
+          u.set(i, j, a.get(i, j));
+      }
+    }
+    
+    return new LUDecomposition(l, u, p);
+  }
+  
+  private void swapRows(int r1, int r2) {
+    double[] tmp = this.data[r1];
+    this.data[r1] = this.data[r2];
+    this.data[r2] = tmp;
+  }
+
+  public double det() {
+    if (m != n)
+      throw new RuntimeException("Determinant is undefined for non-square matrices.");
+    
+    return det_nxn(0, 0, m);
+  }
+
+  private double det_nxn(int r, int c, int s) {
+    if (s == 2)
+      return det_2x2(r, c, r + 1, c + 1);
+    if (s == 3)
+      return det_3x3(r, c, r + 1, c + 1, r + 2, c + 2);
+
+    throw new RuntimeException("Determinant not implemented for bigger than 3x3 matrices.");
+  }
+  
+  private double det_3x3(int r, int c, int r2, int c2, int r3, int c3) {
+    return 
+        get(r, c) * det_2x2(r2, c2, r3, c3) -
+        get(r, c2) * det_2x2(r2, c, r3, c3) +
+        get(r, c3) * det_2x2(r2, c, r3, c2);
+  }
+  
+  private double det_2x2(int r, int c, int r2, int c2) {
+    return get(r, c) * get(r2, c2) - get(r, c2) * get(r2, c);
+  }
+  
+  public Matrix pdist() {
+    throw new RuntimeException("pdist not implemented");
+  }
+  
+  public void sort() {
+    if (this.n != 1)
+      throw new RuntimeException("Sort implemented only for row vectors.");
+    
+    // TODO quicker sort pls.
+    for (int i = 0; i < m - 1; i++) {
+      for (int j = i + 1; j < m; j++) {
+        if (get(i, 0) > get(j, 0)) {
+          double tmp = get(i, 0);
+          set(i, 0, get(j, 0));
+          set(j, 0, tmp);
+        }
+      }
+    }
+  }
+  
+  /**
+   * Row-wise euclidean distances of successive rows. Returns
+   * m-1 dimensional column vector.
+   * 
+   * @return
+   */
+  public Matrix sdist() {
+    Matrix sdist = new Matrix(m - 1, 1);
+    
+    for (int i = 0; i < m - 1; i++) {
+      double sum = 0;
+      
+      for (int j = 0; j < n; j++)
+        sum += Math.pow(get(i, j) - get(i + 1, j), 2);
+      
+      sdist.set(i, 0, Math.sqrt(sum));
+    }
+    
+    return sdist;
+  }
+  
+  public double mean() {
+    return sum() / m * n;
+  }
+  
   public Matrix vectorize() {
     double[][] newdata = new double[this.m * this.n][1];
     

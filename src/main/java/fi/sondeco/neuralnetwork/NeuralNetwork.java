@@ -1,31 +1,48 @@
 package fi.sondeco.neuralnetwork;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import fi.sondeco.matrix.Matrix;
 
 public class NeuralNetwork {
 
-  public NeuralNetwork(NeuralNetworkActivationFunction activationFunction, int ... neuronCounts) {
-    this.activationFunction = activationFunction;
-    this.neuronCounts = neuronCounts;
+  public NeuralNetwork(int inputCount, List<NeuralNetworkLayer> layers) {
+    this.inputCount = inputCount;
+    this.layers.addAll(layers);
+  }
+
+//  public int getOutputCount() {
+//    return getLastLayer().getNumberofNeurons();
+//  }
+  
+//  public int[] getNeuronCounts() {
+//    return neuronCounts;
+//  }
+
+  public int getInputCount() {
+    return inputCount;
+  }
+
+  public List<NeuralNetworkLayer> getLayers() {
+    return Collections.unmodifiableList(this.layers);
+  }
+  
+  public NeuralNetworkLayer getLayer(int layer) {
+    return layers.get(layer);
+  }
+  
+  public int getLayerCount() {
+    return layers.size();
+  }
+  
+  public NeuralNetworkActivationFunction getActivationFunction(int layer) {
+    return layers.get(layer).getActivationFunction();
   }
 
   public int getOutputCount() {
-    return neuronCounts[neuronCounts.length - 1];
-  }
-  
-  public int[] getNeuronCounts() {
-    return neuronCounts;
-  }
-
-  public NeuralNetworkActivationFunction getActivationFunction() {
-    return activationFunction;
-  }
-
-  public void setActivationFunction(NeuralNetworkActivationFunction activationFunction) {
-    this.activationFunction = activationFunction;
+    return getLastLayer().getOutputCount();
   }
 
   /**
@@ -39,16 +56,22 @@ public class NeuralNetwork {
     
     List<Matrix> thetas = reshapeThetas(vectorizedTheta);
     
-    for (Matrix theta : thetas) {
+    for (int i = 0; i < layers.size(); i++) {
+      Matrix theta = thetas.get(i);
+      
       a.addRows(0, 1);
       a.set(0, 0, 1);
 
       a = Matrix.multiply(theta, a);
       
-      a = getActivationFunction().activate(a);
+      a = getActivationFunction(i).activate(a);
     }
 
     return a;
+  }
+  
+  private NeuralNetworkLayer getLastLayer() {
+    return getLayer(layers.size() - 1);
   }
   
   private List<Matrix> reshapeThetas(Matrix vectorizedTheta) {
@@ -56,9 +79,9 @@ public class NeuralNetwork {
     
     int index = 0;
     
-    for (int i = 0; i < neuronCounts.length - 1; i++) {
-      int n1 = neuronCounts[i] + 1;
-      int n2 = neuronCounts[i + 1];
+    for (int i = 0; i < getLayerCount(); i++) {
+      int n1 = getLayer(i).getInputCount() + 1;
+      int n2 = getLayer(i).getOutputCount();
       
       Matrix vector = Matrix.split(vectorizedTheta, index, index + n2 * n1 - 1, 0, 0);
       vector.reshape(n2, n1);
@@ -69,6 +92,6 @@ public class NeuralNetwork {
     return thetas;
   }
   
-  private NeuralNetworkActivationFunction activationFunction;
-  private int[] neuronCounts = new int[0];
+  private List<NeuralNetworkLayer> layers = new ArrayList<NeuralNetworkLayer>();
+  private final int inputCount;
 }

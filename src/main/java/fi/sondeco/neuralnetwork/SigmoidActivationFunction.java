@@ -16,7 +16,7 @@ public class SigmoidActivationFunction implements
     return Matrix.s(1).dotdivide(m);
   }
 
-  public Matrix derivate(Matrix out) {
+  public Matrix gradient(Matrix out) {
 //    gz = 1 ./ (1 + exp(-z));
 //    g = gz .* (1 - gz);
 

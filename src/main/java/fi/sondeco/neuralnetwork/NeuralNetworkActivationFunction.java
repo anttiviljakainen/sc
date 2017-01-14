@@ -6,6 +6,6 @@ public interface NeuralNetworkActivationFunction {
   
   Matrix activate(Matrix out);
   
-  Matrix derivate(Matrix out);
+  Matrix gradient(Matrix out);
   
 }

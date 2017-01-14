@@ -4,6 +4,8 @@ public enum MatrixInit {
 
   ONES,
   
-  RAND
+  RAND,
+  
+  IDENTITY
   
 }
