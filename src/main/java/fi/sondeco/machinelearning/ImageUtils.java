@@ -1,10 +1,6 @@
 package fi.sondeco.machinelearning;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class ImageUtils {
 
@@ -249,9 +245,11 @@ public class ImageUtils {
   /**
    * Grayscale gradient-based edge detection.
    */
-  public static int[][] hough(BufferedImage image, double degreeAccuracy) {
-    int thetaCount = (int) (360 / degreeAccuracy);
-    double maxRho = Math.sqrt(image.getWidth() * image.getWidth() + image.getHeight() * image.getHeight());
+  public static HoughTransformation hough(BufferedImage image, double angleAccuracy) {
+    int thetaCount = (int) (180 / angleAccuracy);
+    int maxRho = (int) Math.ceil(Math.sqrt(image.getWidth() * image.getWidth() + image.getHeight() * image.getHeight()));
+    
+//    double maxRho = Math.ceil((Math.sqrt(2.0) * Math.max(image.getHeight(), image.getWidth())) / 2.0);
     int rhoCount = (int) (maxRho * 2);
     int[][] houghTable = new int[rhoCount][thetaCount];
     
@@ -262,7 +260,7 @@ public class ImageUtils {
       for (int y = 0; y < image.getHeight(); y++) {
         if (grayscale(image.getRGB(x, y)) == 255) {
           for (int theta = 0; theta < thetaCount; theta++) {
-            double angle = Math.toRadians(theta * degreeAccuracy);
+            double angle = Math.toRadians(theta * angleAccuracy);
             double rho = x * Math.cos(angle) + y * Math.sin(angle);
             
             if (rho < minr)
@@ -285,27 +283,38 @@ public class ImageUtils {
     
     System.out.println("dim " + image.getWidth() + " x " + image.getHeight());
     
-    return houghTable;
+    return new HoughTransformation(image.getWidth(), image.getHeight(), 
+        angleAccuracy, houghTable);
   }
-  
-  public static List<HoughVote> houghTop(int[][] houghTable, int count, int voteThreshold) {
-    List<HoughVote> votes = new ArrayList<HoughVote>();
-    for (int rho = 0; rho < houghTable.length; rho++) {
-      for (int angle = 0; angle < houghTable[rho].length; angle++) {
-        if (houghTable[rho][angle] > voteThreshold) {
-          // TODO: proper rho and angle?
-          votes.add(new HoughVote(rho, angle, houghTable[rho][angle]));
-        }
-      }
+
+  /**
+   * http://paulbourke.net/geometry/pointlineplane/
+   * 
+   * @param p1
+   * @param p2
+   * @param p3
+   * @param p4
+   * @return
+   */
+  public static Point2D linesIntersection(Point2D p1, Point2D p2, Point2D p3, Point2D p4, boolean withinSegments) {
+    double d = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
+
+    // Lines don't intersect
+    if (d == 0)
+      return null;
+    
+    double ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / d;
+
+    if (withinSegments) {
+      if ((ua < 0) || (ua > 1))
+        return null;
+      
+      double ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / d;
+      if ((ub < 0) || (ub > 1))
+        return null;
     }
     
-    Collections.sort(votes, new Comparator<HoughVote>() {
-      public int compare(HoughVote arg0, HoughVote arg1) {
-        return arg1.getVotes() - arg0.getVotes();
-      }
-    });
-    
-    return votes.subList(0, count);
+    return new Point2D(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
   }
   
 }

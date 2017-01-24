@@ -2,6 +2,7 @@ package fi.sondeco.machinelearning;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -10,10 +11,9 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
@@ -62,7 +62,7 @@ public class ImageUtilsTestApp {
    */
   private void initialize() throws IOException {
     frame = new JFrame();
-    frame.setBounds(100, 100, 600, 600);
+    frame.setBounds(100, 100, 800, 600);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     
     frame.setLayout(new BorderLayout(5, 5));
@@ -188,14 +188,41 @@ public class ImageUtilsTestApp {
           BufferedImage image = ImageUtils.otsuThreshold(edgeDetectGS, thinning);
           
           double degreeAccuracy = 5;
-          int[][] houghTable = ImageUtils.hough(image, degreeAccuracy);
+          HoughTransformation hough = ImageUtils.hough(image, degreeAccuracy);
           
           final int topLines = 100;
-          final List<HoughVote> houghTop = ImageUtils.houghTop(houghTable, topLines, 1);
+          final List<HoughVote> houghTop = hough.getVotes(topLines, 100);
           for (HoughVote vote : houghTop)
-            System.out.println(String.format("Hou (%d, %d, %d)", vote.getRho(), vote.getAngle(), vote.getVotes()));
-          
+            System.out.println(String.format("Hou (%d, %.1f, %d)", vote.getRho(), vote.getAngle(), vote.getVotes()));
+//            System.out.println(String.format("%d %d %d;", vote.getRho(), vote.getAngle(), vote.getVotes()));
+
           image = loadDefaultImage();
+
+          Graphics g = image.getGraphics();
+          g.setColor(Color.red);
+
+//          g.fillOval(10, 10, 6, 6);
+          
+//          HoughVote v = houghTop.get(0);
+//          Matrix hc = v.getDirectionVector(degreeAccuracy).multiply(100);
+//          g.fillOval((int) hc.get(0,0) - 3, -1 * (int) hc.get(0,1) - 3, 6, 6);
+//          
+//          Matrix pv = v.getPositionVector(degreeAccuracy);
+//          int x = (int) pv.get(0,0) - 3;
+//          int y = -1 * (int) pv.get(0,1) - 3;
+//          g.fillOval(x, y, 6, 6);
+          
+          Set<Point2D> houghCross = houghCross(houghTop, degreeAccuracy, image);
+          
+          for (Point2D hc : houghCross) {
+            g.fillOval((int) hc.x - 3, (int) hc.y - 3, 6, 6);
+          }
+
+          imageIcon.setImage(image);
+          imagePanel.repaint();
+
+          if(true)
+          return;
 
           final BitSetCostFunction costf = new BitSetCostFunction() {
             public double cost(BitSet bitset) {
@@ -278,20 +305,28 @@ public class ImageUtilsTestApp {
             }
           };
           
-          GridOptimizer opt = new GridOptimizer(20, topLines * 2, 4000, 0, 0.01, costf);
-          List<BitSet> minimize = opt.minimize();
-          for (BitSet bs : minimize) {
-            System.out.println(String.format("Cardinality: %d, total cost: %f", bs.cardinality(), costf.cost(bs)));
-          }
           
-          BitSet min = Collections.min(minimize, new Comparator<BitSet>() {
-            public int compare(BitSet o1, BitSet o2) {
-              return (int) Math.signum(costf.cost(o1) - costf.cost(o2));
-            }
-          });
           
-          System.out.println("Best");
-          System.out.println(String.format("Cardinality: %d, total cost: %f", min.cardinality(), costf.cost(min)));
+          
+//          GridOptimizer opt = new GridOptimizer(20, topLines * 2, 4000, 0, 0.01, costf);
+//          List<BitSet> minimize = opt.minimize();
+          GridOptimizer2 opt = new GridOptimizer2(topLines * 2, 10, image.getWidth() / 8, costf);
+          int minVal = opt.minimize();
+          
+          BitSet min = BitSet.valueOf(new long[] { minVal });
+          System.out.println(min);
+//          for (BitSet bs : minimize) {
+//            System.out.println(String.format("Cardinality: %d, total cost: %f", bs.cardinality(), costf.cost(bs)));
+//          }
+          
+//          BitSet min = Collections.min(minimize, new Comparator<BitSet>() {
+//            public int compare(BitSet o1, BitSet o2) {
+//              return (int) Math.signum(costf.cost(o1) - costf.cost(o2));
+//            }
+//          });
+          
+//          System.out.println("Best");
+//          System.out.println(String.format("Cardinality: %d, total cost: %f", min.cardinality(), costf.cost(min)));
           
           List<HoughVote> houghTop2 = new ArrayList<HoughVote>();
           List<HoughVote> houghTop2v = new ArrayList<HoughVote>();
@@ -322,7 +357,7 @@ public class ImageUtilsTestApp {
             int x2 = (int) (Math.cos(angle) * rho * 2);
             int y2 = (int) (Math.sin(angle) * rho * 2);
                 
-            Graphics g = image.getGraphics();
+//            Graphics g = image.getGraphics();
             g.setColor(Color.red);
             if ((x1 > 0) && (y1 > 0)) {
             }
@@ -376,7 +411,7 @@ public class ImageUtilsTestApp {
 //            System.out.println(String.format("j: %d, angle: %f, x: %f, y: %f, x1: %d, y1: %d", 
 //                vote.getAngle(), angle, Math.cos(angle), Math.sin(angle), x1, y1));
 
-            Graphics g = image.getGraphics();
+//            Graphics g = image.getGraphics();
             g.setColor(Color.red);
             if ((x1 > 0) && (y1 > 0)) {
 //                  image.setRGB(x1, y1, Color.green.getRGB());
@@ -512,6 +547,48 @@ public class ImageUtilsTestApp {
           e1.printStackTrace();
         }
       }
+
+      private Set<Point2D> houghCross(List<HoughVote> houghTop, double angleAccuracy, BufferedImage image) {
+        Set<Point2D> crossPoints = new HashSet<Point2D>();
+        
+        for (int a = 0; a < houghTop.size(); a++) {
+          HoughVote hva = houghTop.get(a);
+          for (int b = a + 1; b < houghTop.size(); b++) {
+            HoughVote hvb = houghTop.get(b);
+            
+            if (hva.getAngle() == hvb.getAngle())
+              continue;
+
+//            Matrix lv = hva.getLineVector();
+//            Matrix pv = hva.getPositionVector();
+//            Matrix a1 = Matrix.multiply(lv, -1000).add(pv);
+
+            Matrix a1 = Matrix.multiply(hva.getLineVector(), -1000).add(hva.getPositionVector());
+            Matrix a2 = Matrix.multiply(hva.getLineVector(), 1000).add(hva.getPositionVector());
+            
+            Matrix b1 = Matrix.multiply(hvb.getLineVector(), -1000).add(hvb.getPositionVector());
+            Matrix b2 = Matrix.multiply(hvb.getLineVector(), 1000).add(hvb.getPositionVector());
+            
+            Point2D p1 = new Point2D(a1.get(0, 0), a1.get(0, 1));
+            Point2D p2 = new Point2D(a2.get(0, 0), a2.get(0, 1));
+            Point2D p3 = new Point2D(b1.get(0, 0), b1.get(0, 1));
+            Point2D p4 = new Point2D(b2.get(0, 0), b2.get(0, 1));
+            
+            Graphics g = image.getGraphics();
+            g.setColor(Color.cyan);
+            g.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
+            g.drawLine((int)p3.x, (int)p3.y, (int)p4.x, (int)p4.y);
+            
+//            asd
+            
+            Point2D intersect = ImageUtils.linesIntersection(p1, p2, p3, p4, false);
+            if (intersect != null)
+              crossPoints.add(intersect);
+          }
+        }
+        
+        return crossPoints;
+      }
     });
     buttonPanel.add(hough);
 
@@ -520,7 +597,17 @@ public class ImageUtilsTestApp {
   }
   
   private BufferedImage loadDefaultImage() throws IOException {
-    return ImageIO.read(this.getClass().getResource("4.jpg"));
+//    BufferedImage bi = new BufferedImage(1000, 1000, BufferedImage.TYPE_BYTE_BINARY);
+//    
+//    Graphics g = bi.getGraphics();
+//    g.setColor(Color.black);
+//    g.fillRect(0, 0, 1000, 1000);
+//    g.setColor(Color.white);
+//    g.drawLine(10, 100, 30, 100);
+//
+//    return bi;
+    return ImageIO.read(this.getClass().getResource("cross1.jpg"));
+//    return ImageIO.read(this.getClass().getResource("4.jpg"));
   }
   
   private void viewDefaultImage() throws IOException {
